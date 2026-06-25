@@ -1,0 +1,39 @@
+# .azure/pipelines/synapse-release.yml
+trigger:
+  branches:
+    include:
+      - main
+  paths:
+    include:
+      - src/data_pipelines/*
+      - notebooks/*
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  azureSubscription: 'JFKIAT_Service_Connection'
+  resourceGroupName: 'rg-jfkiat-data-prod'
+  workspaceName: 'syn-jfkiat-ops-prod'
+
+steps:
+- task: UsePythonVersion@0
+  inputs:
+    versionSpec: '3.8'
+    addToPath: true
+  displayName: 'Set up Python for PySpark Validation'
+
+- script: |
+    echo "Validating Notebook Syntax..."
+    python -m py_compile notebooks/01_api_ingestion_and_transformation.py
+  displayName: 'Validate PySpark Scripts'
+
+- task: Synapse workspace deployment@2
+  inputs:
+    operation: 'validateDeploy'
+    ArtifactsFolder: '$(System.DefaultWorkingDirectory)/src/data_pipelines'
+    azureSubscription: '$(azureSubscription)'
+    ResourceGroupName: '$(resourceGroupName)'
+    TargetWorkspaceName: '$(workspaceName)'
+    DeleteArtifactsNotInTemplate: false
+  displayName: 'Deploy Pipelines to Azure Synapse Analytics'
