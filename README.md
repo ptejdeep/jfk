@@ -1,4 +1,3 @@
-# jfk
 # JFKIAT Daily Airport Operations & Forecasting
 
 ## Overview
