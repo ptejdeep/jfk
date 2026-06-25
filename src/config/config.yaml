@@ -1,0 +1,176 @@
+# JFKIAT Configuration File
+# Database and API connections, secrets management patterns
+
+# Database Configuration
+database:
+  # SQL Server / Synapse
+  type: "synapse"  # or "sqlserver", "postgres", "snowflake"
+  host: "${DB_HOST}"  # Use environment variable
+  port: 1433
+  database: "JFKIAT_DataWarehouse"
+  user: "${DB_USER}"
+  password: "${DB_PASSWORD}"
+  
+  # Connection pool
+  pool_size: 10
+  max_overflow: 20
+  pool_recycle: 3600
+
+# API Configuration
+apis:
+  samsara:
+    base_url: "https://api.samsara.com"
+    endpoint: "/fleet/vehicles/locations"
+    api_key: "${SAMSARA_API_KEY}"
+    timeout_seconds: 30
+    retry_attempts: 3
+    
+  vendor_app:
+    base_url: "${VENDOR_APP_URL}"
+    endpoint: "/api/bookings"
+    api_key: "${VENDOR_API_KEY}"
+    timeout_seconds: 30
+    
+  security_checkpoint:
+    base_url: "${SECURITY_API_URL}"
+    endpoint: "/api/checkpoints/metrics"
+    api_key: "${SECURITY_API_KEY}"
+    timeout_seconds: 20
+
+# Forecasting Configuration
+forecasting:
+  prophet:
+    seasonality_prior_scale: 10.0
+    yearly_seasonality: true
+    weekly_seasonality: true
+    daily_seasonality: true
+    interval_width: 0.95  # 95% confidence interval
+    
+  # Forecast horizons
+  short_term_hours: 24    # Used for immediate operations
+  medium_term_hours: 72   # 3-day forecast
+  long_term_hours: 168    # Weekly forecast
+  
+  # Model retraining
+  retrain_frequency_hours: 6
+  min_training_data_days: 30
+  
+  # Metrics to forecast
+  metrics:
+    - passenger_count
+    - vehicle_throughput
+    - wait_time_minutes
+    - staff_utilization
+
+# Data Quality Rules
+data_quality:
+  min_data_points: 720  # 30 days of hourly data
+  max_null_percent_datetime: 1
+  max_null_percent_metric: 5
+  outlier_zscore_threshold: 3.0
+  max_data_staleness_hours: 24
+
+# Logging Configuration
+logging:
+  level: "INFO"  # DEBUG, INFO, WARNING, ERROR, CRITICAL
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  file: "logs/jfkiat_forecasting.log"
+  max_file_size_mb: 100
+  backup_count: 10
+
+# Output Configuration
+output:
+  forecast_output_dir: "output/forecasts"
+  report_output_dir: "output/reports"
+  csv_export_enabled: true
+  parquet_export_enabled: false
+  
+  # Power BI Integration
+  powerbi:
+    enabled: true
+    workspace_id: "${POWERBI_WORKSPACE_ID}"
+    dataset_id: "${POWERBI_DATASET_ID}"
+    refresh_enabled: true
+    refresh_time_utc: "06:00"
+
+# Terminal Configuration
+terminals:
+  - id: "T1"
+    name: "Terminal 1 - United"
+    total_gates: 35
+    
+  - id: "T2"
+    name: "Terminal 2 - International"
+    total_gates: 50
+    
+  - id: "T3"
+    name: "Terminal 3 - American"
+    total_gates: 65
+    
+  - id: "T4"
+    name: "Terminal 4 - International"
+    total_gates: 85
+
+# Checkpoint Configuration
+checkpoints:
+  - id: "CBP_Primary"
+    type: "customs"
+    typical_wait_time_minutes: 8
+    
+  - id: "CBP_Secondary"
+    type: "customs"
+    typical_wait_time_minutes: 15
+    
+  - id: "TSA_PreCheck"
+    type: "security"
+    typical_wait_time_minutes: 5
+    
+  - id: "Boarding"
+    type: "boarding"
+    typical_wait_time_minutes: 3
+
+# Alerting Configuration
+alerts:
+  enabled: true
+  
+  # Alert thresholds
+  thresholds:
+    passenger_spike_percent: 150  # Alert if forecast is 150% of normal
+    wait_time_threshold_minutes: 30
+    system_error_consecutive_failures: 3
+    
+  # Notification channels
+  channels:
+    slack:
+      enabled: false
+      webhook_url: "${SLACK_WEBHOOK_URL}"
+    email:
+      enabled: true
+      recipients: ["operations@jfkiat.example.com"]
+    pagerduty:
+      enabled: false
+      integration_key: "${PAGERDUTY_KEY}"
+
+# Scheduling (if using Airflow or similar)
+scheduling:
+  timezone: "US/Eastern"
+  
+  # Ingest fresh data every hour
+  ingest_schedule: "0 * * * *"
+  
+  # Retrain model every 6 hours
+  retrain_schedule: "0 */6 * * *"
+  
+  # Generate forecasts every hour
+  forecast_schedule: "30 * * * *"
+  
+  # Publish to Power BI every 2 hours
+  publish_schedule: "0 */2 * * *"
+
+# Feature Flags
+features:
+  use_advanced_seasonality: true
+  use_holiday_adjustment: true
+  use_external_regressors: false
+  enable_anomaly_detection: true
+  enable_confidence_intervals: true
