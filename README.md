@@ -1,5 +1,4 @@
-# JFKIAT Daily Airport Operations & Forecasting
-
+# JFKIAT Daily Airport Operations
 ## Overview
 This repository contains the data models and forecasting pipelines developed for daily operations at JFKIAT (JFK International Air Terminal). The project supports the Security Operations Center (SOC) and Customs and Border Protection (CBP) by providing hourly forecasts and operational insights to manage terminal flow efficiently.
 
